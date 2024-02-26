@@ -2,6 +2,7 @@ package main
 
 import (
 	"dwelt/handler"
+	"dwelt/ws/chat"
 	"flag"
 	"log/slog"
 	"net/http"
@@ -13,13 +14,11 @@ func main() {
 	slog.SetLogLoggerLevel(slog.LevelDebug)
 	flag.Parse()
 
-	handler.InitHandlers()
+	hub := chat.NewHub()
+	go hub.Run()
 
-	//hub := chat.NewHub()
-	//go hub.Run()
-	//http.HandleFunc("/ws", func(w http.ResponseWriter, r *http.Request) {
-	//	chat.ServeWs(hub, w, r)
-	//})
+	handler.InitHandlers(hub)
+
 	server := &http.Server{
 		Addr: *port,
 	}

@@ -27,13 +27,10 @@ var upgrader = websocket.Upgrader{
 }
 
 type Client struct {
-	hub  *Hub
-	conn *websocket.Conn
-	send chan []byte
-}
-
-func NewClient(hub *Hub, conn *websocket.Conn, send chan []byte) *Client {
-	return &Client{hub: hub, conn: conn, send: send}
+	hub      *Hub
+	conn     *websocket.Conn
+	send     chan []byte
+	username string
 }
 
 func (c *Client) readPump() {
@@ -52,7 +49,7 @@ func (c *Client) readPump() {
 			}
 			break
 		}
-		c.hub.broadcast <- message
+		c.hub.broadcast <- []byte(c.username + ": " + string(message))
 	}
 }
 
@@ -99,13 +96,18 @@ func (c *Client) writePump() {
 }
 
 // ServeWs handles websocket requests from the peer.
-func ServeWs(hub *Hub, w http.ResponseWriter, r *http.Request) {
+func ServeWs(hub *Hub, username string, w http.ResponseWriter, r *http.Request) {
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		log.Println(err)
 		return
 	}
-	client := &Client{hub: hub, conn: conn, send: make(chan []byte, 256)}
+	client := &Client{
+		hub:      hub,
+		conn:     conn,
+		send:     make(chan []byte, 256),
+		username: username,
+	}
 	client.hub.register <- client
 
 	go client.writePump()
