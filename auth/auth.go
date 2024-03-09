@@ -3,7 +3,6 @@ package auth
 import (
 	"flag"
 	"github.com/golang-jwt/jwt"
-	"log/slog"
 	"time"
 )
 
@@ -15,7 +14,6 @@ func GenerateToken(username string) string {
 			"usr": username,
 		},
 	)
-	slog.Debug("generating token using key: " + *key) // fixme remove
 	tokenString, _ := token.SignedString([]byte(*key))
 
 	return tokenString

@@ -46,6 +46,7 @@ jobs:
           tags: ghcr.io/ruskaof/dwelt:latest
           build-args: |
             JWT_KEY=${{ secrets.JWT_KEY }}
+            WORKFLOW_RUN_NUMBER=${{ github.run_number }}
 
       - name: Deploy to VPS
         uses: appleboy/ssh-action@master
