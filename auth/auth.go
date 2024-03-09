@@ -3,6 +3,7 @@ package auth
 import (
 	"flag"
 	"github.com/golang-jwt/jwt"
+	"log/slog"
 	"time"
 )
 
@@ -14,6 +15,7 @@ func GenerateToken(username string) string {
 			"usr": username,
 		},
 	)
+	slog.Debug("generating token using key: " + *key) // fixme remove
 	tokenString, _ := token.SignedString([]byte(*key))
 
 	return tokenString
@@ -46,5 +48,5 @@ func ValidateToken(tokenString string) (username string, valid bool, err error) 
 	return
 }
 
-var key = flag.String("key", "secret", "jwt secret key")
+var key = flag.String("jwtkey", "secret", "jwt secret key")
 var expirationSeconds = flag.Int("expiration", 3600, "token expiration time in seconds")

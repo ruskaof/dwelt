@@ -8,5 +8,6 @@ RUN go mod download
 RUN go build -o main
 
 EXPOSE 8080
+ARG JWT_KEY
 
-CMD ["./main"]
+CMD ["./main", "-jwtkey", "$JWT_KEY"]

@@ -44,6 +44,8 @@ jobs:
           context: .
           push: true
           tags: ghcr.io/ruskaof/dwelt:latest
+          build-args: |
+            JWT_KEY=${{ secrets.JWT_KEY }}
 
       - name: Deploy to VPS
         uses: appleboy/ssh-action@master
