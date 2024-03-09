@@ -22,6 +22,7 @@ func main() {
 	server := &http.Server{
 		Addr: *port,
 	}
+	slog.Info("Starting server on port " + *port)
 	err := server.ListenAndServe()
 	if err != nil {
 		slog.Error("error starting server: ", err)
