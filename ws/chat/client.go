@@ -3,6 +3,7 @@ package chat
 import (
 	"github.com/gorilla/websocket"
 	"log"
+	"log/slog"
 	"net/http"
 	"time"
 )
@@ -16,9 +17,6 @@ const (
 
 	// Send pings to peer with this period. Must be less than pongWait.
 	pingPeriod = (pongWait * 9) / 10
-
-	// Maximum message size allowed from peer.
-	maxMessageSize = 512
 )
 
 var upgrader = websocket.Upgrader{
@@ -58,7 +56,7 @@ func (c *Client) writePump() {
 	defer func() {
 		ticker.Stop()
 		if err := c.conn.Close(); err != nil {
-			log.Println(err)
+			slog.Error(err.Error())
 		}
 	}()
 	for {
@@ -99,7 +97,7 @@ func (c *Client) writePump() {
 func ServeWs(hub *Hub, username string, w http.ResponseWriter, r *http.Request) {
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
-		log.Println(err)
+		slog.Error(err.Error())
 		return
 	}
 	client := &Client{

@@ -2,6 +2,7 @@ package handler
 
 import (
 	"dwelt/auth"
+	"dwelt/utils"
 	"dwelt/ws/chat"
 	"flag"
 	"net/http"
@@ -10,7 +11,12 @@ import (
 
 var workflowRunNumber = flag.Int("wflrn", 0, "workflow run number")
 
-type UserHandlerFunc func(w http.ResponseWriter, r *http.Request, username string)
+type UserInfo struct {
+	Username string `json:"username"`
+	Id       int64  `json:"id"`
+}
+
+type UserHandlerFunc func(w http.ResponseWriter, r *http.Request, userInfo UserInfo)
 
 func InitHandlers(hub *chat.Hub) {
 	http.HandleFunc("/login", handlerLogin)
@@ -35,7 +41,7 @@ func handlerAuthMiddleware(next UserHandlerFunc) http.HandlerFunc {
 			w.WriteHeader(http.StatusUnauthorized)
 			return
 		}
-		next(w, r, username)
+		next(w, r, UserInfo{Username: username, Id: -1})
 	}
 }
 
@@ -51,12 +57,12 @@ func handlerLogin(w http.ResponseWriter, r *http.Request) {
 
 	token := auth.GenerateToken(username)
 	w.Header().Set("Authorization", "Bearer "+token)
-	w.WriteHeader(http.StatusOK)
+	utils.WriteJson(w, UserInfo{Username: username, Id: -1}) // todo: send correct id
 }
 
-func handlerHelloWorld(w http.ResponseWriter, _ *http.Request, username string) { // todo remove
+func handlerHelloWorld(w http.ResponseWriter, _ *http.Request, userInfo UserInfo) { // todo remove
 	w.WriteHeader(http.StatusOK)
-	w.Write([]byte("hello, " + username))
+	w.Write([]byte("hello, " + userInfo.Username))
 }
 
 func handleApplicationInfoDashboard(w http.ResponseWriter, _ *http.Request) {
@@ -65,7 +71,7 @@ func handleApplicationInfoDashboard(w http.ResponseWriter, _ *http.Request) {
 }
 
 func createHandlerWs(hub *chat.Hub) UserHandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request, username string) {
-		chat.ServeWs(hub, username, w, r)
+	return func(w http.ResponseWriter, r *http.Request, userInfo UserInfo) {
+		chat.ServeWs(hub, userInfo.Username, w, r)
 	}
 }
