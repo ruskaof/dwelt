@@ -50,7 +50,7 @@ jobs:
         with:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USERNAME }}
-          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          password: ${{ secrets.VPS_PASSWORD }}
           script: |
             docker stop dwelt || true
             docker rm dwelt || true
