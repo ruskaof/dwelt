@@ -3,8 +3,12 @@ package handler
 import (
 	"dwelt/auth"
 	"dwelt/ws/chat"
+	"flag"
 	"net/http"
+	"strconv"
 )
+
+var workflowRunNumber = flag.Int("wflrn", 0, "workflow run number")
 
 type UserHandlerFunc func(w http.ResponseWriter, r *http.Request, username string)
 
@@ -12,6 +16,7 @@ func InitHandlers(hub *chat.Hub) {
 	http.HandleFunc("/login", handlerLogin)
 	http.HandleFunc("/hello", handlerAuthMiddleware(handlerHelloWorld))
 	http.HandleFunc("/ws", handlerAuthMiddleware(createHandlerWs(hub)))
+	http.HandleFunc("/info", handleApplicationInfoDashboard)
 }
 
 func handlerAuthMiddleware(next UserHandlerFunc) http.HandlerFunc {
@@ -52,6 +57,11 @@ func handlerLogin(w http.ResponseWriter, r *http.Request) {
 func handlerHelloWorld(w http.ResponseWriter, _ *http.Request, username string) { // todo remove
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte("hello, " + username))
+}
+
+func handleApplicationInfoDashboard(w http.ResponseWriter, _ *http.Request) {
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte("Workflow run number: " + strconv.Itoa(*workflowRunNumber)))
 }
 
 func createHandlerWs(hub *chat.Hub) UserHandlerFunc {
