@@ -3,7 +3,7 @@ name: Build, Package, and Deploy
 on:
   push:
     branches:
-      - master
+      - main
 
 jobs:
   build-package-deploy:
