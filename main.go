@@ -1,8 +1,10 @@
 package main
 
 import (
-	"dwelt/handler"
-	"dwelt/ws/chat"
+	"dwelt/src/config"
+	"dwelt/src/handler"
+	"dwelt/src/model/dao"
+	"dwelt/src/ws/chat"
 	"flag"
 	"log/slog"
 	"net/http"
@@ -13,6 +15,8 @@ var port = flag.String("port", ":8080", "port to listen on")
 func main() {
 	slog.SetLogLoggerLevel(slog.LevelDebug)
 	flag.Parse()
+	config.InitCfg()
+	dao.InitDB()
 
 	hub := chat.NewHub()
 	go hub.Run()

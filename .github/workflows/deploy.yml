@@ -45,8 +45,13 @@ jobs:
           push: true
           tags: ghcr.io/ruskaof/dwelt:latest
           build-args: |
-            JWT_KEY=${{ secrets.JWT_KEY }}
-            WORKFLOW_RUN_NUMBER=${{ github.run_number }}
+            DWELT_JWT_KEY=${{ secrets.JWT_KEY }}
+            DWELT_WORKFLOW_RUN_NUMBER=${{ github.run_number }}
+            DB_HOST=${{ secrets.DB_HOST }}
+            DB_PORT=5432
+            DB_USER=${{ secrets.DB_USER }}
+            DB_PASSWORD=${{ secrets.DB_PASSWORD }}
+            DB_NAME=dweltdb
 
       - name: Deploy to VPS
         uses: appleboy/ssh-action@master

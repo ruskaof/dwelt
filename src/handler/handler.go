@@ -1,15 +1,13 @@
 package handler
 
 import (
-	"dwelt/auth"
-	"dwelt/utils"
-	"dwelt/ws/chat"
-	"flag"
+	"dwelt/src/auth"
+	"dwelt/src/config"
+	"dwelt/src/utils"
+	"dwelt/src/ws/chat"
 	"net/http"
 	"strconv"
 )
-
-var workflowRunNumber = flag.Int("wflrn", 0, "workflow run number")
 
 type UserInfo struct {
 	Username string `json:"username"`
@@ -62,12 +60,12 @@ func handlerLogin(w http.ResponseWriter, r *http.Request) {
 
 func handlerHelloWorld(w http.ResponseWriter, _ *http.Request, userInfo UserInfo) { // todo remove
 	w.WriteHeader(http.StatusOK)
-	w.Write([]byte("hello, " + userInfo.Username))
+	utils.Must(w.Write([]byte("hello, " + userInfo.Username)))
 }
 
 func handleApplicationInfoDashboard(w http.ResponseWriter, _ *http.Request) {
 	w.WriteHeader(http.StatusOK)
-	w.Write([]byte("Workflow run number: " + strconv.Itoa(*workflowRunNumber)))
+	utils.Must(w.Write([]byte("Workflow run number: " + strconv.Itoa(config.DweltCfg.WorkflowRunNumber))))
 }
 
 func createHandlerWs(hub *chat.Hub) UserHandlerFunc {

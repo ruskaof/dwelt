@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"dwelt/src/config"
 	"flag"
 	"github.com/golang-jwt/jwt"
 	"time"
@@ -14,14 +15,14 @@ func GenerateToken(username string) string {
 			"usr": username,
 		},
 	)
-	tokenString, _ := token.SignedString([]byte(*key))
+	tokenString, _ := token.SignedString([]byte(config.DweltCfg.JwtKey))
 
 	return tokenString
 }
 
 func ValidateToken(tokenString string) (username string, valid bool, err error) {
 	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
-		return []byte(*key), nil
+		return []byte(config.DweltCfg.JwtKey), nil
 	})
 	if err != nil {
 		return
@@ -46,5 +47,4 @@ func ValidateToken(tokenString string) (username string, valid bool, err error) 
 	return
 }
 
-var key = flag.String("jwtkey", "secret", "jwt secret key")
 var expirationSeconds = flag.Int("expiration", 3600, "token expiration time in seconds")
