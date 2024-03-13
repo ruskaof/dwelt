@@ -7,12 +7,12 @@ import (
 	"time"
 )
 
-func GenerateToken(username string) string {
+func GenerateToken(userId int64) string {
 	token := jwt.NewWithClaims(
 		jwt.SigningMethodHS256,
 		jwt.MapClaims{
-			"exp": jwt.TimeFunc().Add(time.Duration(*expirationSeconds) * time.Second).Unix(),
-			"usr": username,
+			"exp":    jwt.TimeFunc().Add(time.Duration(*expirationSeconds) * time.Second).Unix(),
+			"userId": userId,
 		},
 	)
 	tokenString, _ := token.SignedString([]byte(config.DweltCfg.JwtKey))
@@ -20,7 +20,7 @@ func GenerateToken(username string) string {
 	return tokenString
 }
 
-func ValidateToken(tokenString string) (username string, valid bool, err error) {
+func ValidateToken(tokenString string) (userId int64, valid bool, err error) {
 	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
 		return []byte(config.DweltCfg.JwtKey), nil
 	})
@@ -38,10 +38,11 @@ func ValidateToken(tokenString string) (username string, valid bool, err error) 
 		return
 	}
 
-	username, ok = claims["usr"].(string)
+	userIdFloat, ok := claims["userId"].(float64)
 	if !ok {
 		return
 	}
+	userId = int64(userIdFloat)
 
 	valid = token.Valid
 	return

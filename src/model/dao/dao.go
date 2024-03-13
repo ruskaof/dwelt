@@ -20,5 +20,5 @@ func InitDB() {
 		config.DbCfg.Port,
 	)
 
-	Db = utils.Must(gorm.Open(postgres.Open(dsn), &gorm.Config{}))
+	Db = utils.Must(gorm.Open(postgres.Open(dsn), &gorm.Config{TranslateError: true}))
 }

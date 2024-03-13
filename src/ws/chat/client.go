@@ -5,6 +5,7 @@ import (
 	"log"
 	"log/slog"
 	"net/http"
+	"strconv"
 	"time"
 )
 
@@ -25,10 +26,10 @@ var upgrader = websocket.Upgrader{
 }
 
 type Client struct {
-	hub      *Hub
-	conn     *websocket.Conn
-	send     chan []byte
-	username string
+	hub    *Hub
+	conn   *websocket.Conn
+	send   chan []byte
+	userId int64
 }
 
 func (c *Client) readPump() {
@@ -47,7 +48,7 @@ func (c *Client) readPump() {
 			}
 			break
 		}
-		c.hub.broadcast <- []byte(c.username + ": " + string(message))
+		c.hub.broadcast <- []byte(strconv.FormatInt(c.userId, 10) + ": " + string(message))
 	}
 }
 
@@ -94,17 +95,17 @@ func (c *Client) writePump() {
 }
 
 // ServeWs handles websocket requests from the peer.
-func ServeWs(hub *Hub, username string, w http.ResponseWriter, r *http.Request) {
+func ServeWs(hub *Hub, userId int64, w http.ResponseWriter, r *http.Request) {
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		slog.Error(err.Error())
 		return
 	}
 	client := &Client{
-		hub:      hub,
-		conn:     conn,
-		send:     make(chan []byte, 256),
-		username: username,
+		hub:    hub,
+		conn:   conn,
+		send:   make(chan []byte, 256),
+		userId: userId,
 	}
 	client.hub.register <- client
 
