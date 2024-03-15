@@ -22,6 +22,7 @@ func ValidateUser(username string, password string) (userId int64, valid bool, e
 	err = dao.Db.Where("username = ? AND password = ?", username, hashPassword(password)).First(&user).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		slog.Debug("User not found", "username", username, "password", password)
+		err = nil
 		return
 	}
 	if err != nil {
