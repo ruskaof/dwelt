@@ -43,13 +43,13 @@ func (c *Client) readPump() {
 		}
 	}()
 
-	c.conn.SetReadLimit(maxMessageSize)
-	c.conn.SetReadDeadline(time.Now().Add(pongWait))
-	c.conn.SetPongHandler(func(string) error {
-		c.conn.SetReadDeadline(time.Now().Add(pongWait))
-		slog.Debug("Got pong from the client", "address", c.conn.NetConn().RemoteAddr().String())
-		return nil
-	})
+	//c.conn.SetReadLimit(maxMessageSize) // todo uncomment
+	//c.conn.SetReadDeadline(time.Now().Add(pongWait))
+	//c.conn.SetPongHandler(func(string) error {
+	//	slog.Debug("Got pong from the client", "address", c.conn.NetConn().RemoteAddr().String())
+	//	c.conn.SetReadDeadline(time.Now().Add(pongWait))
+	//	return nil
+	//})
 
 	for {
 		_, message, err := c.conn.ReadMessage()
