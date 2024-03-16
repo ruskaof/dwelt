@@ -83,6 +83,7 @@ func (c *Client) writePump() {
 
 			w, err := c.conn.NextWriter(websocket.TextMessage)
 			if err != nil {
+				slog.Error(err.Error(), "method", "Ws next writer")
 				return
 			}
 			w.Write(message)
@@ -99,6 +100,7 @@ func (c *Client) writePump() {
 		case <-ticker.C:
 			c.conn.SetWriteDeadline(time.Now().Add(writeWait))
 			if err := c.conn.WriteMessage(websocket.PingMessage, nil); err != nil {
+				slog.Error(err.Error(), "method", "Ws ping")
 				return
 			}
 		}
