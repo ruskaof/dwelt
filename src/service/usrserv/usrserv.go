@@ -26,7 +26,7 @@ func ValidateUser(username string, password string) (userId int64, valid bool, e
 		return
 	}
 	if err != nil {
-		slog.Error(err.Error())
+		slog.Error(err.Error(), "method", "ValidateUser")
 		return
 	}
 
@@ -49,7 +49,7 @@ func RegisterUser(username string, password string) (userId int64, duplicate boo
 		return
 	}
 	if err != nil {
-		slog.Error(err.Error())
+		slog.Error(err.Error(), "method", "RegisterUser")
 		return
 	}
 

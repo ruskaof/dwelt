@@ -37,7 +37,7 @@ func handlerAuthMiddleware(next http.HandlerFunc) http.HandlerFunc {
 		}
 		userId, valid, err := auth.ValidateToken(tokenString[7:])
 		if err != nil {
-			slog.Error(err.Error())
+			slog.Error(err.Error(), "method", "ValidateToken")
 			w.WriteHeader(http.StatusUnauthorized)
 			return
 		}

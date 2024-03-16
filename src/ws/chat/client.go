@@ -68,7 +68,7 @@ func (c *Client) writePump() {
 	defer func() {
 		ticker.Stop()
 		if err := c.conn.Close(); err != nil {
-			slog.Error(err.Error())
+			slog.Error(err.Error(), "method", "Ws connection close deffering")
 		}
 	}()
 	for {
@@ -109,7 +109,7 @@ func (c *Client) writePump() {
 func ServeWs(hub *Hub, userId int64, w http.ResponseWriter, r *http.Request) {
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
-		slog.Error(err.Error())
+		slog.Error(err.Error(), "method", "Ws upgrade")
 		return
 	}
 	client := &Client{
