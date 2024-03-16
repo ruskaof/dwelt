@@ -99,6 +99,7 @@ func (c *Client) writePump() {
 			}
 		case <-ticker.C:
 			c.conn.SetWriteDeadline(time.Now().Add(writeWait))
+			slog.Debug("Sending ping to the client", "address", c.conn.NetConn().RemoteAddr().String())
 			if err := c.conn.WriteMessage(websocket.PingMessage, nil); err != nil {
 				slog.Error(err.Error(), "method", "Ws ping")
 				return
