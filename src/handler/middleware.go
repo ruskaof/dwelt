@@ -3,7 +3,6 @@ package handler
 import (
 	"context"
 	"dwelt/src/auth"
-	"fmt"
 	"log/slog"
 	"net/http"
 )
@@ -32,7 +31,7 @@ func handlerAuthMiddleware(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		tokenString := r.Header.Get("Authorization")
 		if len(tokenString) < 8 {
-			slog.Debug(fmt.Sprintf("Invalid token length: %d", len(tokenString)))
+			slog.Debug("Invalid token length", "token", tokenString)
 			w.WriteHeader(http.StatusUnauthorized)
 			return
 		}
@@ -43,11 +42,11 @@ func handlerAuthMiddleware(next http.HandlerFunc) http.HandlerFunc {
 			return
 		}
 		if !valid {
-			slog.Debug(fmt.Sprintf("Validation failed for token: %s", tokenString))
+			slog.Debug("Validation failed", "token", tokenString)
 			w.WriteHeader(http.StatusUnauthorized)
 			return
 		}
-		slog.Debug(fmt.Sprintf("User %d authenticated", userId))
+		slog.Debug("User authenticated", "userId", userId)
 		newReq := r.WithContext(context.WithValue(r.Context(), "userId", userId))
 		next(w, newReq)
 	}
