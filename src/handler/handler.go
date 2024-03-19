@@ -6,16 +6,24 @@ import (
 	"dwelt/src/service/usrserv"
 	"dwelt/src/utils"
 	"dwelt/src/ws/chat"
+	"github.com/gorilla/mux"
 	"net/http"
 	"strconv"
 )
 
 func InitHandlers(hub *chat.Hub) {
-	http.HandleFunc("/register", makeHandler(handlerRegister, handlerPOSTMiddleware))
-	http.HandleFunc("/login", makeHandler(handlerLogin, handlerGETMiddleware))
-	http.HandleFunc("/hello", makeHandler(handlerHelloWorld, handlerAuthMiddleware))
-	http.HandleFunc("/ws", makeHandler(createHandlerWs(hub), handlerAuthMiddleware))
-	http.HandleFunc("/info", makeHandler(handleApplicationInfoDashboard, handlerAuthMiddleware))
+	authenticatedRouter := mux.NewRouter()
+	authenticatedRouter.Use(handlerAuthMiddleware)
+	authenticatedRouter.HandleFunc("/hello", handlerHelloWorld).Methods(http.MethodGet)
+	authenticatedRouter.HandleFunc("/ws", createHandlerWs(hub)).Methods(http.MethodGet)
+	authenticatedRouter.HandleFunc("/info", handleApplicationInfoDashboard).Methods(http.MethodGet)
+
+	noAuthRouter := mux.NewRouter()
+	noAuthRouter.HandleFunc("/register", handlerRegister).Methods(http.MethodPost)
+	noAuthRouter.HandleFunc("/login", handlerLogin).Methods(http.MethodGet)
+
+	http.Handle("/", authenticatedRouter)
+	http.Handle("/", noAuthRouter)
 }
 
 func handlerLogin(w http.ResponseWriter, r *http.Request) {

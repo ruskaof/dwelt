@@ -7,28 +7,8 @@ import (
 	"net/http"
 )
 
-func handlerGETMiddleware(next http.HandlerFunc) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		if r.Method != http.MethodGet {
-			w.WriteHeader(http.StatusMethodNotAllowed)
-			return
-		}
-		next(w, r)
-	}
-}
-
-func handlerPOSTMiddleware(next http.HandlerFunc) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		if r.Method != http.MethodPost {
-			w.WriteHeader(http.StatusMethodNotAllowed)
-			return
-		}
-		next(w, r)
-	}
-}
-
-func handlerAuthMiddleware(next http.HandlerFunc) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
+func handlerAuthMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		tokenString := r.Header.Get("Authorization")
 		if len(tokenString) < 8 {
 			slog.Debug("Invalid token length", "token", tokenString)
@@ -47,7 +27,7 @@ func handlerAuthMiddleware(next http.HandlerFunc) http.HandlerFunc {
 			return
 		}
 		slog.Debug("User authenticated", "userId", userId)
-		newReq := r.WithContext(context.WithValue(r.Context(), "userId", userId))
-		next(w, newReq)
-	}
+		r = r.WithContext(context.WithValue(r.Context(), "userId", userId))
+		next.ServeHTTP(w, r)
+	})
 }
