@@ -11,6 +11,8 @@ import (
 	"strconv"
 )
 
+const DEFAULT_LIMIT = 100
+
 func InitHandlers(hub *chat.Hub) {
 	router := mux.NewRouter()
 
@@ -18,11 +20,14 @@ func InitHandlers(hub *chat.Hub) {
 	authenticatedRouter.Use(handlerAuthMiddleware)
 	authenticatedRouter.HandleFunc("/hello", handlerHelloWorld).Methods(http.MethodGet)
 	authenticatedRouter.HandleFunc("/ws", createHandlerWs(hub)).Methods(http.MethodGet)
-	authenticatedRouter.HandleFunc("/info", handleApplicationInfoDashboard).Methods(http.MethodGet)
-
+	
+	usersRouter := authenticatedRouter.PathPrefix("/users").Subrouter()
+	usersRouter.HandleFunc("/search", handlerSearchUsers).Methods(http.MethodGet)
+	
 	noAuthRouter := router.PathPrefix("/").Subrouter()
 	noAuthRouter.HandleFunc("/register", handlerRegister).Methods(http.MethodPost)
 	noAuthRouter.HandleFunc("/login", handlerLogin).Methods(http.MethodGet)
+	noAuthRouter.HandleFunc("/info", handleApplicationInfoDashboard).Methods(http.MethodGet)
 
 	http.Handle("/", router)
 }
@@ -70,6 +75,16 @@ func handlerRegister(w http.ResponseWriter, r *http.Request) {
 	token := auth.GenerateToken(userId)
 	w.Header().Set("Authorization", "Bearer "+token)
 	utils.WriteJson(w, userInfo{UserId: userId})
+}
+
+func handlerSearchUsers(w http.ResponseWriter, r *http.Request) {
+	substring := r.URL.Query().Get("substring")
+	users, err := usrserv.SearchUsers(substring, DEFAULT_LIMIT)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	utils.WriteJson(w, users)
 }
 
 func handlerHelloWorld(w http.ResponseWriter, r *http.Request) { // todo remove
