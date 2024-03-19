@@ -12,18 +12,19 @@ import (
 )
 
 func InitHandlers(hub *chat.Hub) {
-	authenticatedRouter := mux.NewRouter()
+	router := mux.NewRouter()
+
+	authenticatedRouter := router.PathPrefix("/").Subrouter()
 	authenticatedRouter.Use(handlerAuthMiddleware)
 	authenticatedRouter.HandleFunc("/hello", handlerHelloWorld).Methods(http.MethodGet)
 	authenticatedRouter.HandleFunc("/ws", createHandlerWs(hub)).Methods(http.MethodGet)
 	authenticatedRouter.HandleFunc("/info", handleApplicationInfoDashboard).Methods(http.MethodGet)
 
-	noAuthRouter := mux.NewRouter()
+	noAuthRouter := router.PathPrefix("/").Subrouter()
 	noAuthRouter.HandleFunc("/register", handlerRegister).Methods(http.MethodPost)
 	noAuthRouter.HandleFunc("/login", handlerLogin).Methods(http.MethodGet)
 
-	http.Handle("/", authenticatedRouter)
-	http.Handle("/", noAuthRouter)
+	http.Handle("/", router)
 }
 
 func handlerLogin(w http.ResponseWriter, r *http.Request) {
