@@ -3,6 +3,7 @@ package handler
 import (
 	"dwelt/src/auth"
 	"dwelt/src/config"
+	"dwelt/src/dto"
 	"dwelt/src/service/usrserv"
 	"dwelt/src/utils"
 	"dwelt/src/ws/chat"
@@ -55,7 +56,7 @@ func handlerLogin(w http.ResponseWriter, r *http.Request) {
 
 	token := auth.GenerateToken(userId)
 	w.Header().Set("Authorization", "Bearer "+token)
-	utils.WriteJson(w, userInfo{UserId: userId})
+	utils.WriteJson(w, dto.UserInfo{UserId: userId})
 }
 
 func handlerRegister(w http.ResponseWriter, r *http.Request) {
@@ -78,12 +79,12 @@ func handlerRegister(w http.ResponseWriter, r *http.Request) {
 
 	token := auth.GenerateToken(userId)
 	w.Header().Set("Authorization", "Bearer "+token)
-	utils.WriteJson(w, userInfo{UserId: userId})
+	utils.WriteJson(w, dto.UserInfo{UserId: userId})
 }
 
 func handlerSearchUsers(w http.ResponseWriter, r *http.Request) {
-	substring := r.URL.Query().Get("substring")
-	users, err := usrserv.SearchUsers(substring, DEFAULT_LIMIT)
+	prefix := r.URL.Query().Get("prefix")
+	users, err := usrserv.SearchUsers(prefix, DEFAULT_LIMIT)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return

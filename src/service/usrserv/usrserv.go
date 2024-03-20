@@ -2,6 +2,7 @@ package usrserv
 
 import (
 	"crypto/sha512"
+	"dwelt/src/dto"
 	"dwelt/src/model/dao"
 	"dwelt/src/model/entity"
 	"encoding/hex"
@@ -58,14 +59,14 @@ func RegisterUser(username string, password string) (userId int64, duplicate boo
 	return
 }
 
-func SearchUsers(substring string, limit int) (users []UserResponse, err error) {
+func SearchUsers(prefix string, limit int) (users []dto.UserResponse, err error) {
 	var usersEntity []entity.User
-	err = dao.Db.Where("username LIKE ?", substring+"%").Limit(limit).Find(&usersEntity).Error
+	err = dao.Db.Where("username LIKE ?", prefix+"%").Limit(limit).Find(&usersEntity).Error
 	if err != nil {
 		slog.Error(err.Error(), "method", "SearchUsers")
 	}
 
-	users = make([]UserResponse, len(usersEntity))
+	users = make([]dto.UserResponse, len(usersEntity))
 	for i, user := range usersEntity {
 		users[i] = userResponseFromEntity(user)
 	}
