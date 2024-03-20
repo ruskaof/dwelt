@@ -4,8 +4,10 @@ import (
 	"dwelt/src/config"
 	"dwelt/src/utils"
 	"fmt"
+
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
+	"gorm.io/gorm/logger"
 )
 
 var Db *gorm.DB
@@ -20,5 +22,11 @@ func InitDB() {
 		config.DbCfg.Port,
 	)
 
-	Db = utils.Must(gorm.Open(postgres.Open(dsn), &gorm.Config{TranslateError: true}))
+	Db = utils.Must(
+		gorm.Open(postgres.Open(dsn), &gorm.Config{
+			TranslateError: true,
+			// log every SQL command
+			Logger: logger.Default.LogMode(logger.Info),
+		}),
+	)
 }

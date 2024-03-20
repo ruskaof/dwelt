@@ -6,9 +6,10 @@ import (
 	"dwelt/src/service/usrserv"
 	"dwelt/src/utils"
 	"dwelt/src/ws/chat"
-	"github.com/gorilla/mux"
 	"net/http"
 	"strconv"
+
+	"github.com/gorilla/mux"
 )
 
 const DEFAULT_LIMIT = 100
@@ -20,10 +21,13 @@ func InitHandlers(hub *chat.Hub) {
 	authenticatedRouter.Use(handlerAuthMiddleware)
 	authenticatedRouter.HandleFunc("/hello", handlerHelloWorld).Methods(http.MethodGet)
 	authenticatedRouter.HandleFunc("/ws", createHandlerWs(hub)).Methods(http.MethodGet)
-	
+
 	usersRouter := authenticatedRouter.PathPrefix("/users").Subrouter()
 	usersRouter.HandleFunc("/search", handlerSearchUsers).Methods(http.MethodGet)
-	
+
+	chatsRouter := authenticatedRouter.PathPrefix("/chats").Subrouter()
+	chatsRouter.HandleFunc("/direct/{directToUid}", handlerFindDirectChat).Methods(http.MethodGet)
+
 	noAuthRouter := router.PathPrefix("/").Subrouter()
 	noAuthRouter.HandleFunc("/register", handlerRegister).Methods(http.MethodPost)
 	noAuthRouter.HandleFunc("/login", handlerLogin).Methods(http.MethodGet)
@@ -85,6 +89,27 @@ func handlerSearchUsers(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	utils.WriteJson(w, users)
+}
+
+func handlerFindDirectChat(w http.ResponseWriter, r *http.Request) {
+	requesterUid := retrieveUserId(r)
+	userId, err := strconv.ParseInt(mux.Vars(r)["directToUid"], 10, 64)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	chatId, badUsers, err := usrserv.FindDirectChat(requesterUid, userId)
+	if badUsers {
+		w.WriteHeader(http.StatusNotFound)
+		return
+	}
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	utils.WriteJson(w, chatId)
 }
 
 func handlerHelloWorld(w http.ResponseWriter, r *http.Request) { // todo remove
