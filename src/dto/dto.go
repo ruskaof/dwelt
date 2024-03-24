@@ -40,3 +40,7 @@ func DeserializeWebSocketClientMessage(data []byte) (message WebSocketClientMess
 	err = json.Unmarshal(data, &message)
 	return
 }
+
+type OpenDirectChatResponse struct {
+	ChatId int64 `json:"chatId"`
+}

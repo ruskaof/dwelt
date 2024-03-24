@@ -118,7 +118,7 @@ func (uc UserController) handlerFindDirectChat(w http.ResponseWriter, r *http.Re
 		return
 	}
 
-	utils.WriteJson(w, chatId)
+	utils.WriteJson(w, dto.OpenDirectChatResponse{ChatId: chatId})
 }
 
 func (uc UserController) handlerHelloWorld(w http.ResponseWriter, r *http.Request) { // todo remove
