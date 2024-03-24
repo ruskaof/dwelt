@@ -1,17 +1,17 @@
 package chat
 
-import "log/slog"
+import "dwelt/src/dto"
 
 type Hub struct {
 	clients    map[*Client]bool
-	broadcast  chan []byte
+	Incoming   chan dto.WebSocketClientMessage
 	register   chan *Client
 	unregister chan *Client
 }
 
 func NewHub() *Hub {
 	return &Hub{
-		broadcast:  make(chan []byte),
+		Incoming:   make(chan dto.WebSocketClientMessage),
 		register:   make(chan *Client),
 		unregister: make(chan *Client),
 		clients:    make(map[*Client]bool),
@@ -28,15 +28,15 @@ func (h *Hub) Run() {
 				delete(h.clients, client)
 				close(client.send)
 			}
-		case message := <-h.broadcast:
-			slog.Debug("Broadcasting message", "message", string(message))
-			for client := range h.clients {
-				select {
-				case client.send <- message:
-				default:
-					close(client.send)
-					delete(h.clients, client)
-				}
+		}
+	}
+}
+
+func (h *Hub) SendToSelected(message dto.WebSocketServerMessage, ids []int64) {
+	for client := range h.clients {
+		for _, id := range ids {
+			if client.userId == id {
+				client.send <- dto.SerializeWebSocketServerMessage(message)
 			}
 		}
 	}

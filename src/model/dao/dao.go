@@ -10,9 +10,7 @@ import (
 	"gorm.io/gorm/logger"
 )
 
-var Db *gorm.DB
-
-func InitDB() {
+func InitDB() *gorm.DB {
 	dsn := fmt.Sprintf(
 		"host=%s user=%s password=%s dbname=%s port=%d sslmode=disable",
 		config.DbCfg.Host,
@@ -22,7 +20,7 @@ func InitDB() {
 		config.DbCfg.Port,
 	)
 
-	Db = utils.Must(
+	return utils.Must(
 		gorm.Open(postgres.Open(dsn), &gorm.Config{
 			TranslateError: true,
 			// log every SQL command

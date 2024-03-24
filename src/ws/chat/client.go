@@ -1,11 +1,11 @@
 package chat
 
 import (
+	"dwelt/src/dto"
 	"github.com/gorilla/websocket"
 	"log"
 	"log/slog"
 	"net/http"
-	"strconv"
 	"time"
 )
 
@@ -54,12 +54,16 @@ func (c *Client) readPump() {
 	for {
 		_, message, err := c.conn.ReadMessage()
 		if err != nil {
-			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway) {
-				c.hub.broadcast <- []byte(err.Error())
-			}
+			slog.Debug(err.Error(), "method", "Ws read message")
 			break
 		}
-		c.hub.broadcast <- []byte(strconv.FormatInt(c.userId, 10) + ": " + string(message))
+		deserializedMessage, err := dto.DeserializeWebSocketClientMessage(message)
+		if err != nil {
+			slog.Debug(err.Error(), "method", "Ws deserialize message")
+			continue
+		}
+
+		c.hub.Incoming <- deserializedMessage
 	}
 }
 

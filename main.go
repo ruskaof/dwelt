@@ -4,6 +4,7 @@ import (
 	"dwelt/src/config"
 	"dwelt/src/handler"
 	"dwelt/src/model/dao"
+	"dwelt/src/service/usrserv"
 	"dwelt/src/ws/chat"
 	"flag"
 	"log/slog"
@@ -16,12 +17,14 @@ func main() {
 	slog.SetLogLoggerLevel(slog.LevelDebug)
 	flag.Parse()
 	config.InitCfg()
-	dao.InitDB()
+	db := dao.InitDB()
 
 	hub := chat.NewHub()
 	go hub.Run()
 
-	handler.InitHandlers(hub)
+	userService := usrserv.NewUserService(hub, db)
+	userController := handler.NewUserController(userService)
+	userController.InitHandlers(hub)
 
 	server := &http.Server{
 		Addr: *port,
