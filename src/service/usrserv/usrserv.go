@@ -135,13 +135,25 @@ func (us *UserService) FindDirectChat(requesterUid int64, directToUid int64) (ch
 	return
 }
 
-func (us *UserService) HandleMessage(userId int64, message dto.WebSocketClientMessage) {
+func (us *UserService) StartHandlingMessages() {
+	go func() {
+		for {
+			select {
+			case message := <-us.wsHub.Incoming:
+				slog.Debug("Handling message", "message", message)
+				us.handleMessage(message)
+			}
+		}
+	}()
+}
+
+func (us *UserService) handleMessage(message chat.IncomingClientMessage) {
 	// find chat
 	chatEntity := entity.Chat{
-		ID: message.ChatId,
+		ID: message.Message.ChatId,
 	}
 
-	err := us.db.Model(&entity.Chat{}).Preload("Users").First(&chatEntity, message.ChatId).Error
+	err := us.db.Model(&entity.Chat{}).Preload("Users").First(&chatEntity, message.Message.ChatId).Error
 	if err != nil {
 		slog.Error(err.Error(), "method", "HandleMessage")
 		return
@@ -151,7 +163,7 @@ func (us *UserService) HandleMessage(userId int64, message dto.WebSocketClientMe
 	inChat := false
 	var otherUserIds []int64
 	for _, user := range chatEntity.Users {
-		if user.ID == userId {
+		if user.ID == message.ClientId {
 			inChat = true
 		} else {
 			otherUserIds = append(otherUserIds, user.ID)
@@ -159,13 +171,13 @@ func (us *UserService) HandleMessage(userId int64, message dto.WebSocketClientMe
 	}
 
 	if !inChat {
-		slog.Error("User is not in chat", "userId", userId, "chatId", message.ChatId)
+		slog.Error("User is not in chat", "userId", message.ClientId, "chatId", message.Message.ChatId)
 		return
 	}
 
 	serverMessage := dto.WebSocketServerMessage{
-		ChatId:  message.ChatId,
-		Message: message.Message,
+		ChatId:  message.Message.ChatId,
+		Message: message.Message.Message,
 	}
 
 	us.wsHub.SendToSelected(serverMessage, otherUserIds)

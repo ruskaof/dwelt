@@ -23,6 +23,11 @@ const (
 	maxMessageSize = 512
 )
 
+type IncomingClientMessage struct {
+	ClientId int64
+	Message  dto.WebSocketClientMessage
+}
+
 var upgrader = websocket.Upgrader{
 	ReadBufferSize:  1024,
 	WriteBufferSize: 1024,
@@ -63,7 +68,10 @@ func (c *Client) readPump() {
 			continue
 		}
 
-		c.hub.Incoming <- deserializedMessage
+		c.hub.Incoming <- IncomingClientMessage{
+			ClientId: c.userId,
+			Message:  deserializedMessage,
+		}
 	}
 }
 

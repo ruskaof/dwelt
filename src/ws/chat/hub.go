@@ -4,14 +4,14 @@ import "dwelt/src/dto"
 
 type Hub struct {
 	clients    map[*Client]bool
-	Incoming   chan dto.WebSocketClientMessage
+	Incoming   chan IncomingClientMessage
 	register   chan *Client
 	unregister chan *Client
 }
 
 func NewHub() *Hub {
 	return &Hub{
-		Incoming:   make(chan dto.WebSocketClientMessage),
+		Incoming:   make(chan IncomingClientMessage),
 		register:   make(chan *Client),
 		unregister: make(chan *Client),
 		clients:    make(map[*Client]bool),

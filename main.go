@@ -26,6 +26,8 @@ func main() {
 	userController := handler.NewUserController(userService)
 	userController.InitHandlers(hub)
 
+	userService.StartHandlingMessages()
+
 	server := &http.Server{
 		Addr: *port,
 	}
