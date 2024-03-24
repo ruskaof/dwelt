@@ -100,7 +100,7 @@ func handlerFindDirectChat(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	chatId, badUsers, err := usrserv.FindDirectChat(requesterUid, userId)
+	chatId, badUsers, err := usrserv.FindDirectChat(requesterUid, userId) // todo: show old messages
 	if badUsers {
 		w.WriteHeader(http.StatusNotFound)
 		return

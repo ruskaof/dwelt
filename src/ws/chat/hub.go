@@ -1,5 +1,7 @@
 package chat
 
+import "log/slog"
+
 type Hub struct {
 	clients    map[*Client]bool
 	broadcast  chan []byte
@@ -27,6 +29,7 @@ func (h *Hub) Run() {
 				close(client.send)
 			}
 		case message := <-h.broadcast:
+			slog.Debug("Broadcasting message", "message", string(message))
 			for client := range h.clients {
 				select {
 				case client.send <- message:
