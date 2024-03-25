@@ -7,7 +7,6 @@ import (
 	"dwelt/src/ws/chat"
 	"encoding/hex"
 	"errors"
-	. "github.com/samber/lo"
 	"gorm.io/gorm"
 	"log/slog"
 )
@@ -162,11 +161,12 @@ func (us *UserService) handleMessage(message chat.IncomingClientMessage) {
 
 	// check if user is in chat
 	inChat := false
+	var receiversUserIds []int64
 	for _, user := range chatEntity.Users {
 		if user.ID == message.ClientId {
 			inChat = true
-			break
 		}
+		receiversUserIds = append(receiversUserIds, user.ID)
 	}
 
 	if !inChat {
@@ -179,11 +179,5 @@ func (us *UserService) handleMessage(message chat.IncomingClientMessage) {
 		Message: message.Message.Message,
 	}
 
-	us.wsHub.SendToSelected(
-		serverMessage,
-		Map(chatEntity.Users,
-			func(user entity.User, _ int) int64 {
-				return user.ID
-			}),
-	)
+	us.wsHub.SendToSelected(serverMessage, receiversUserIds)
 }
