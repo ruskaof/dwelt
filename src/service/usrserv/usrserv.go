@@ -161,10 +161,12 @@ func (us *UserService) handleMessage(message chat.IncomingClientMessage) {
 
 	// check if user is in chat
 	inChat := false
+	var username string
 	var receiversUserIds []int64
 	for _, user := range chatEntity.Users {
 		if user.ID == message.ClientId {
 			inChat = true
+			username = user.Username
 		}
 		receiversUserIds = append(receiversUserIds, user.ID)
 	}
@@ -175,9 +177,10 @@ func (us *UserService) handleMessage(message chat.IncomingClientMessage) {
 	}
 
 	serverMessage := dto.WebSocketServerMessage{
-		ChatId:  message.Message.ChatId,
-		UserId:  message.ClientId,
-		Message: message.Message.Message,
+		ChatId:   message.Message.ChatId,
+		UserId:   message.ClientId,
+		Username: username,
+		Message:  message.Message.Message,
 	}
 
 	us.wsHub.SendToSelected(serverMessage, receiversUserIds)
