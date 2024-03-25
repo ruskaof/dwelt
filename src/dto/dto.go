@@ -18,6 +18,7 @@ type WebSocketClientMessage struct {
 
 type WebSocketServerMessage struct {
 	ChatId  int64  `json:"chatId"`
+	UserId  int64  `json:"userId"`
 	Message string `json:"message"`
 }
 

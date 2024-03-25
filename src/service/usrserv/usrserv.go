@@ -176,6 +176,7 @@ func (us *UserService) handleMessage(message chat.IncomingClientMessage) {
 
 	serverMessage := dto.WebSocketServerMessage{
 		ChatId:  message.Message.ChatId,
+		UserId:  message.ClientId,
 		Message: message.Message.Message,
 	}
 
