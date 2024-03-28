@@ -16,3 +16,10 @@ type Chat struct {
 	Name  string `gorm:"column:name"`
 	Users []User `gorm:"many2many:users_chats;"`
 }
+
+type Message struct {
+	ID        int64     `gorm:"column:id"`
+	CreatedAt time.Time `gorm:"column:created_at"`
+	Text      string    `gorm:"column:text"`
+	ChatId    int64     `gorm:"column:chat_id"`
+}

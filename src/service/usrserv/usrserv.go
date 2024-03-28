@@ -3,23 +3,22 @@ package usrserv
 import (
 	"crypto/sha512"
 	"dwelt/src/dto"
+	"dwelt/src/model/dao"
 	"dwelt/src/model/entity"
 	"dwelt/src/ws/chat"
 	"encoding/hex"
-	"errors"
-	"gorm.io/gorm"
 	"log/slog"
 )
 
 type UserService struct {
-	wsHub *chat.Hub
-	db    *gorm.DB
+	wsHub   *chat.Hub
+	userDao *dao.UserDao
 }
 
-func NewUserService(wsHub *chat.Hub, db *gorm.DB) *UserService {
+func NewUserService(wsHub *chat.Hub, userDao *dao.UserDao) *UserService {
 	return &UserService{
-		wsHub: wsHub,
-		db:    db,
+		wsHub:   wsHub,
+		userDao: userDao,
 	}
 }
 
@@ -30,16 +29,14 @@ func hashPassword(password string) string {
 }
 
 func (us *UserService) ValidateUser(username string, password string) (userId int64, valid bool, err error) {
-	var user entity.User
-
-	err = us.db.Where("username = ? AND password = ?", username, hashPassword(password)).First(&user).Error
-	if errors.Is(err, gorm.ErrRecordNotFound) {
-		slog.Debug("User not found", "username", username, "password", password)
-		err = nil
-		return
-	}
+	user, err := us.userDao.FindUserByUsernameAndPassword(username, hashPassword(password))
 	if err != nil {
 		slog.Error(err.Error(), "method", "ValidateUser")
+		return
+	}
+
+	if user == nil {
+		valid = false
 		return
 	}
 
@@ -50,31 +47,14 @@ func (us *UserService) ValidateUser(username string, password string) (userId in
 }
 
 func (us *UserService) RegisterUser(username string, password string) (userId int64, duplicate bool, err error) {
-	user := entity.User{
-		Username: username,
-		Password: hashPassword(password),
-	}
-
-	err = us.db.Create(&user).Error
-	if errors.Is(err, gorm.ErrDuplicatedKey) {
-		duplicate = true
-		err = nil
-		return
-	}
-	if err != nil {
-		slog.Error(err.Error(), "method", "RegisterUser")
-		return
-	}
-
-	userId = user.ID
+	userId, duplicate, err = us.userDao.CreateUser(username, hashPassword(password))
 	return
 }
 
 func (us *UserService) SearchUsers(prefix string, limit int) (users []dto.UserResponse, err error) {
-	var usersEntity []entity.User
-	err = us.db.Where("username LIKE ?", prefix+"%").Limit(limit).Find(&usersEntity).Error
+	usersEntity, err := us.userDao.SearchUsers(prefix, limit)
 	if err != nil {
-		slog.Error(err.Error(), "method", "SearchUsers")
+		return
 	}
 
 	users = make([]dto.UserResponse, len(usersEntity))
@@ -85,54 +65,30 @@ func (us *UserService) SearchUsers(prefix string, limit int) (users []dto.UserRe
 	return
 }
 
-func (us *UserService) FindDirectChat(requesterUid int64, directToUid int64) (chatId int64, badUsers bool, err error) {
-	// check if both users exist
-	var count int64
-	err = us.db.Model(&entity.User{}).Where("id IN (?)", []int64{requesterUid, directToUid}).Count(&count).Error
+func (us *UserService) FindDirectChat(requesterUid int64, directToUid int64) (chatId int64, err error) {
+	directChat, err := us.userDao.FindDirectChat(requesterUid, directToUid)
 	if err != nil {
-		slog.Error(err.Error(), "method", "FindDirectChat")
-		return
-	}
-	if count != 2 {
-		badUsers = true
 		return
 	}
 
-	var chatEntity entity.Chat
-	err = us.db.
-		Joins("JOIN users_chats uc1 ON chats.id = uc1.chat_id").
-		Joins("JOIN users_chats uc2 ON uc1.chat_id = uc2.chat_id").
-		Where("uc1.user_id = ?", requesterUid).
-		Where("uc2.user_id = ?", directToUid).
-		First(&chatEntity).Error
-	if errors.Is(err, gorm.ErrRecordNotFound) {
-		err = nil
-	}
-	if err != nil {
-		slog.Error(err.Error(), "method", "CreateDirectChat")
-		return
+	if directChat != nil {
+		return directChat.ID, nil
 	}
 
-	if chatEntity.ID != 0 {
-		chatId = chatEntity.ID
-		return
-	}
-
-	// create chat with associated users but don't create the users
-	chatEntity = entity.Chat{
+	newChat := entity.Chat{
+		Name: "",
 		Users: []entity.User{
 			{ID: requesterUid},
 			{ID: directToUid},
 		},
 	}
-	err = us.db.Create(&chatEntity).Error
+
+	newChatId, err := us.userDao.CreateChat(&newChat)
 	if err != nil {
-		slog.Error(err.Error(), "method", "CreateDirectChat")
 		return
 	}
 
-	chatId = chatEntity.ID
-	return
+	return newChatId, nil
 }
 
 func (us *UserService) StartHandlingMessages() {
@@ -149,38 +105,47 @@ func (us *UserService) StartHandlingMessages() {
 
 func (us *UserService) handleMessage(message chat.IncomingClientMessage) {
 	// find chat
-	chatEntity := entity.Chat{
-		ID: message.Message.ChatId,
-	}
-
-	err := us.db.Model(&entity.Chat{}).Preload("Users").First(&chatEntity, message.Message.ChatId).Error
+	chatEntity, err := us.userDao.FindChatById(message.Message.ChatId)
 	if err != nil {
-		slog.Error(err.Error(), "method", "HandleMessage")
+		slog.Error(err.Error(), "method", "handleMessage")
 		return
 	}
 
-	// check if user is in chat
-	inChat := false
-	var username string
+	// check if the user is in the chat
+	userInChat := false
+	username := ""
 	var receiversUserIds []int64
 	for _, user := range chatEntity.Users {
+		receiversUserIds = append(receiversUserIds, user.ID)
 		if user.ID == message.ClientId {
-			inChat = true
+			userInChat = true
 			username = user.Username
 		}
-		receiversUserIds = append(receiversUserIds, user.ID)
 	}
 
-	if !inChat {
-		slog.Error("User is not in chat", "userId", message.ClientId, "chatId", message.Message.ChatId)
+	if !userInChat {
+		slog.Error("User not in chat", "method", "handleMessage")
+		return
+	}
+
+	// save message
+	messageEntity := entity.Message{
+		Text:   message.Message.Message,
+		ChatId: message.Message.ChatId,
+	}
+
+	err = us.userDao.SaveMessage(&messageEntity)
+	if err != nil {
+		slog.Error(err.Error(), "method", "handleMessage")
 		return
 	}
 
 	serverMessage := dto.WebSocketServerMessage{
-		ChatId:   message.Message.ChatId,
-		UserId:   message.ClientId,
-		Username: username,
-		Message:  message.Message.Message,
+		ChatId:    message.Message.ChatId,
+		UserId:    message.ClientId,
+		Username:  username,
+		Message:   message.Message.Message,
+		CreatedAt: messageEntity.CreatedAt,
 	}
 
 	us.wsHub.SendToSelected(serverMessage, receiversUserIds)

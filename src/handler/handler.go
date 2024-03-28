@@ -108,11 +108,7 @@ func (uc UserController) handlerFindDirectChat(w http.ResponseWriter, r *http.Re
 		return
 	}
 
-	chatId, badUsers, err := uc.userService.FindDirectChat(requesterUid, userId) // todo: show old messages
-	if badUsers {
-		w.WriteHeader(http.StatusNotFound)
-		return
-	}
+	chatId, err := uc.userService.FindDirectChat(requesterUid, userId) // todo: show old messages
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return

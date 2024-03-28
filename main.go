@@ -22,7 +22,8 @@ func main() {
 	hub := chat.NewHub()
 	go hub.Run()
 
-	userService := usrserv.NewUserService(hub, db)
+	userDao := dao.NewUserDao(db)
+	userService := usrserv.NewUserService(hub, userDao)
 	userController := handler.NewUserController(userService)
 	userController.InitHandlers(hub)
 

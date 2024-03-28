@@ -1,6 +1,9 @@
 package dto
 
-import "encoding/json"
+import (
+	"encoding/json"
+	"time"
+)
 
 type UserInfo struct {
 	UserId int64 `json:"id"`
@@ -17,10 +20,11 @@ type WebSocketClientMessage struct {
 }
 
 type WebSocketServerMessage struct {
-	ChatId   int64  `json:"chatId"`
-	UserId   int64  `json:"userId"`
-	Username string `json:"username"`
-	Message  string `json:"message"`
+	ChatId    int64     `json:"chatId"`
+	UserId    int64     `json:"userId"`
+	Username  string    `json:"username"`
+	Message   string    `json:"message"`
+	CreatedAt time.Time `json:"createdAt"`
 }
 
 func SerializeWebSocketServerMessage(message WebSocketServerMessage) []byte {
