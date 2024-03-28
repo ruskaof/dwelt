@@ -65,14 +65,22 @@ func (us *UserService) SearchUsers(prefix string, limit int) (users []dto.UserRe
 	return
 }
 
-func (us *UserService) FindDirectChat(requesterUid int64, directToUid int64) (chatId int64, err error) {
+func (us *UserService) OpenDirectChat(requesterUid int64, directToUid int64) (*dto.OpenDirectChatResponse, error) {
 	directChat, err := us.userDao.FindDirectChat(requesterUid, directToUid)
 	if err != nil {
-		return
+		return nil, err
 	}
 
 	if directChat != nil {
-		return directChat.ID, nil
+		lastMessages, err := us.userDao.FindLastMessagesByChat(directChat.ID, 1000)
+		if err != nil {
+			return nil, err
+		}
+
+		return &dto.OpenDirectChatResponse{
+			ChatId:       directChat.ID,
+			LastMessages: mapMessagesToWebSocketServerMessages(lastMessages),
+		}, nil
 	}
 
 	newChat := entity.Chat{
@@ -85,10 +93,12 @@ func (us *UserService) FindDirectChat(requesterUid int64, directToUid int64) (ch
 
 	newChatId, err := us.userDao.CreateChat(&newChat)
 	if err != nil {
-		return
+		return nil, err
 	}
 
-	return newChatId, nil
+	return &dto.OpenDirectChatResponse{
+		ChatId: newChatId,
+	}, nil
 }
 
 func (us *UserService) StartHandlingMessages() {
@@ -132,6 +142,7 @@ func (us *UserService) handleMessage(message chat.IncomingClientMessage) {
 	messageEntity := entity.Message{
 		Text:   message.Message.Message,
 		ChatId: message.Message.ChatId,
+		UserId: message.ClientId,
 	}
 
 	err = us.userDao.SaveMessage(&messageEntity)

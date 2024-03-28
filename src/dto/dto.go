@@ -48,5 +48,6 @@ func DeserializeWebSocketClientMessage(data []byte) (message WebSocketClientMess
 }
 
 type OpenDirectChatResponse struct {
-	ChatId int64 `json:"chatId"`
+	ChatId       int64                    `json:"chatId"`
+	LastMessages []WebSocketServerMessage `json:"lastMessagesSorted"`
 }

@@ -1,6 +1,8 @@
 package chat
 
-import "dwelt/src/dto"
+import (
+	"dwelt/src/dto"
+)
 
 type Hub struct {
 	clients    map[*Client]bool

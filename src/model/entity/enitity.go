@@ -22,4 +22,6 @@ type Message struct {
 	CreatedAt time.Time `gorm:"column:created_at"`
 	Text      string    `gorm:"column:text"`
 	ChatId    int64     `gorm:"column:chat_id"`
+	UserId    int64     `gorm:"column:user_id"`
+	User      User      `gorm:"foreignkey:UserId"`
 }

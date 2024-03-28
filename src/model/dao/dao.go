@@ -96,8 +96,8 @@ func (ud *UserDao) FindDirectChat(userId1, userId2 int64) (*entity.Chat, error) 
 		Where("uc1.user_id = ?", userId1).
 		Where("uc2.user_id = ?", userId2).
 		First(&chatEntity).Error
-	if err != nil {
-		return nil, err
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, nil
 	}
 	return &chatEntity, nil
 }
@@ -121,8 +121,9 @@ func (ud *UserDao) SaveMessage(message *entity.Message) error {
 	return ud.db.Create(message).Error
 }
 
-// FindMessagesByChatId finds messages by chat id
-func (ud *UserDao) FindMessagesByChatId(chatId int64, limit int32) (messages []entity.Message) {
-	ud.db.Where("chat_id = ?", chatId).Limit(int(limit)).Find(&messages)
+func (ud *UserDao) FindLastMessagesByChat(chatId int64, limit int32) (messages []entity.Message, err error) {
+	err = ud.db.
+		Preload("User").
+		Where("chat_id = ?", chatId).Order("created_at desc").Limit(int(limit)).Find(&messages).Error
 	return
 }

@@ -108,13 +108,13 @@ func (uc UserController) handlerFindDirectChat(w http.ResponseWriter, r *http.Re
 		return
 	}
 
-	chatId, err := uc.userService.FindDirectChat(requesterUid, userId) // todo: show old messages
+	res, err := uc.userService.OpenDirectChat(requesterUid, userId) //
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
-	utils.WriteJson(w, dto.OpenDirectChatResponse{ChatId: chatId})
+	utils.WriteJson(w, res)
 }
 
 func (uc UserController) handlerHelloWorld(w http.ResponseWriter, r *http.Request) { // todo remove
