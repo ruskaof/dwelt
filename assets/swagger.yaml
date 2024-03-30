@@ -1,0 +1,186 @@
+definitions:
+  dto.OpenDirectChatResponse:
+    properties:
+      chatId:
+        type: integer
+      lastMessagesSorted:
+        items:
+          $ref: '#/definitions/dto.WebSocketServerMessage'
+        type: array
+    type: object
+  dto.UserInfo:
+    properties:
+      id:
+        type: integer
+    type: object
+  dto.WebSocketServerMessage:
+    properties:
+      chatId:
+        type: integer
+      createdAt:
+        type: string
+      message:
+        type: string
+      userId:
+        type: integer
+      username:
+        type: string
+    type: object
+info:
+  contact: {}
+  description: This is the API for the Dwelt application.
+  title: Dwelt API
+  version: 0.0.1
+paths:
+  /chats/direct/{directToUid}:
+    get:
+      consumes:
+      - application/json
+      description: Creates a chat if it does not exist and returns the chat id and
+        previous messages
+      parameters:
+      - description: User id to open chat with
+        in: path
+        name: directToUid
+        required: true
+        type: integer
+      - description: Bearer <token>
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.OpenDirectChatResponse'
+        "500":
+          description: Internal Server Error
+      summary: Open direct chat
+      tags:
+      - Chats
+  /login:
+    get:
+      consumes:
+      - application/json
+      description: Get a JWT token for the user using basic auth
+      parameters:
+      - description: Basic auth
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          headers:
+            Authorization:
+              description: Bearer <token>
+              type: string
+          schema:
+            $ref: '#/definitions/dto.UserInfo'
+        "401":
+          description: Unauthorized
+        "500":
+          description: Internal Server Error
+      summary: Authenticate user
+      tags:
+      - Auth
+  /register:
+    post:
+      consumes:
+      - application/json
+      description: Register a new user using basic auth
+      parameters:
+      - description: Basic auth
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          headers:
+            Authorization:
+              type: string
+          schema:
+            $ref: '#/definitions/dto.UserInfo'
+        "401":
+          description: Unauthorized
+        "409":
+          description: Conflict
+        "500":
+          description: Internal Server Error
+      summary: Register user
+      tags:
+      - Auth
+  /users/search:
+    get:
+      consumes:
+      - application/json
+      description: Search for users by prefix
+      parameters:
+      - description: Prefix to search for
+        in: query
+        name: prefix
+        required: true
+        type: string
+      - description: Bearer <token>
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/dto.UserInfo'
+            type: array
+        "500":
+          description: Internal Server Error
+      summary: Search users
+      tags:
+      - User
+  /ws:
+    get:
+      consumes:
+      - application/json
+      description: |-
+        Connects to the websocket
+        <br>Messages from the server are in the following format:
+        ```json
+        {
+        "chatId": "integer",
+        "userId": "integer",
+        "username": "string",
+        "message": "string",
+        "createdAt": "date"
+        }
+        ```
+        <br>Messages to the server are in the following format:
+        ```json
+        {
+        "chatId": "integer",
+        "message": "string"
+        }
+        ```
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+        "500":
+          description: Internal Server Error
+      summary: Starts websocket connection
+      tags:
+      - Ws
+swagger: "2.0"

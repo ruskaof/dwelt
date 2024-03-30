@@ -13,6 +13,9 @@ import (
 
 var port = flag.String("port", ":8080", "port to listen on")
 
+// @title			Dwelt API
+// @version		0.0.1
+// @description	This is the API for the Dwelt application.
 func main() {
 	slog.SetLogLoggerLevel(slog.LevelDebug)
 	flag.Parse()
