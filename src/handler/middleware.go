@@ -1,10 +1,14 @@
 package handler
 
 import (
+	"bytes"
 	"context"
 	"dwelt/src/auth"
+	"dwelt/src/metrics"
+	"github.com/gorilla/mux"
 	"log/slog"
 	"net/http"
+	"time"
 )
 
 func handlerAuthMiddleware(next http.Handler) http.Handler {
@@ -29,5 +33,25 @@ func handlerAuthMiddleware(next http.Handler) http.Handler {
 		slog.Debug("User authenticated", "userId", userId)
 		r = r.WithContext(context.WithValue(r.Context(), "userId", userId))
 		next.ServeHTTP(w, r)
+	})
+}
+
+func handlerMetricsMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		path, _ := mux.CurrentRoute(r).GetPathTemplate()
+
+		var reqBuffer bytes.Buffer
+		err := r.Write(&reqBuffer)
+		if err != nil {
+			panic(err)
+		}
+
+		start := time.Now()
+
+		next.ServeHTTP(w, r)
+
+		duration := time.Since(start)
+
+		metrics.RecordHttpRequest(r.Method, path, duration.Seconds(), reqBuffer.Len())
 	})
 }

@@ -2,6 +2,7 @@ package chat
 
 import (
 	"dwelt/src/dto"
+	"dwelt/src/metrics"
 	"github.com/gorilla/websocket"
 	"log"
 	"log/slog"
@@ -20,7 +21,7 @@ const (
 	pingPeriod = (pongWait * 9) / 10
 
 	// Maximum message size allowed from peer.
-	maxMessageSize = 512
+	// maxMessageSize = 512 todo: use this
 )
 
 type IncomingClientMessage struct {
@@ -48,13 +49,12 @@ func (c *Client) readPump() {
 		}
 	}()
 
-	//c.conn.SetReadLimit(maxMessageSize) // todo uncomment
-	//c.conn.SetReadDeadline(time.Now().Add(pongWait))
-	//c.conn.SetPongHandler(func(string) error {
-	//	slog.Debug("Got pong from the client", "address", c.conn.NetConn().RemoteAddr().String())
-	//	c.conn.SetReadDeadline(time.Now().Add(pongWait))
-	//	return nil
-	//})
+	c.conn.SetReadDeadline(time.Now().Add(pongWait))
+	c.conn.SetPongHandler(func(string) error {
+		slog.Debug("Got pong from the client", "address", c.conn.NetConn().RemoteAddr().String())
+		c.conn.SetReadDeadline(time.Now().Add(pongWait))
+		return nil
+	})
 
 	for {
 		_, message, err := c.conn.ReadMessage()
@@ -99,11 +99,13 @@ func (c *Client) writePump() {
 				return
 			}
 			w.Write(message)
+			metrics.IncrementIncomingWebsocketBytes(len(message))
 
 			// Add queued chat messages to the current websocket message.
 			n := len(c.send)
 			for i := 0; i < n; i++ {
 				w.Write(<-c.send)
+				metrics.IncrementIncomingWebsocketBytes(len(message))
 			}
 
 			if err := w.Close(); err != nil {

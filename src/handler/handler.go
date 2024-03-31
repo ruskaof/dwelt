@@ -9,6 +9,7 @@ import (
 	"dwelt/src/utils"
 	"dwelt/src/ws/chat"
 	"github.com/flowchartsman/swaggerui"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"net/http"
 	"strconv"
 
@@ -27,6 +28,7 @@ func NewUserController(userService *usrserv.UserService) *UserController {
 
 func (uc UserController) InitHandlers(hub *chat.Hub) {
 	router := mux.NewRouter()
+	router.Use(handlerMetricsMiddleware)
 
 	authenticatedRouter := router.PathPrefix("/").Subrouter()
 	authenticatedRouter.Use(handlerAuthMiddleware)
@@ -44,6 +46,7 @@ func (uc UserController) InitHandlers(hub *chat.Hub) {
 	noAuthRouter.HandleFunc("/login", uc.handlerLogin).Methods(http.MethodGet)
 	noAuthRouter.HandleFunc("/info", uc.handleApplicationInfoDashboard).Methods(http.MethodGet)
 	http.Handle("/swagger/", http.StripPrefix("/swagger", swaggerui.Handler(assets.SwaggerYaml)))
+	http.Handle("/metrics", promhttp.Handler())
 	http.Handle("/", router)
 }
 

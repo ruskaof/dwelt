@@ -2,6 +2,7 @@ package chat
 
 import (
 	"dwelt/src/dto"
+	"dwelt/src/metrics"
 )
 
 type Hub struct {
@@ -25,10 +26,12 @@ func (h *Hub) Run() {
 		select {
 		case client := <-h.register:
 			h.clients[client] = true
+			metrics.IncrementWebsocketConnections()
 		case client := <-h.unregister:
 			if _, ok := h.clients[client]; ok {
 				delete(h.clients, client)
 				close(client.send)
+				metrics.DecrementWebsocketConnections()
 			}
 		}
 	}
