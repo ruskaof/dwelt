@@ -48,4 +48,4 @@ func ValidateToken(tokenString string) (userId int64, valid bool, err error) {
 	return
 }
 
-var expirationSeconds = flag.Int("expiration", 3600, "token expiration time in seconds")
+var expirationSeconds = flag.Int("expiration", 3600*24*7, "token expiration time in seconds")
